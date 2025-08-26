@@ -1,0 +1,4 @@
+freecurrencyapi
+requests
+pokebase
+streamlit
