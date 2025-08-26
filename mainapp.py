@@ -1,4 +1,5 @@
 import smtplib, ssl, freecurrencyapi
+import streamlit as st
 import random, requests
 import os, time
 import pokebase as pb
@@ -8,11 +9,11 @@ from streamlit import spinner
 from dotenv import load_dotenv
 load_dotenv()
 
-weather_key = "75d8b852a915780ea290ceaddedb8a1a"
-sender = "struradek196@gmail.com"
-pw = "zsmz ynzw zzho cbwx"
-receiver = "struradek196@gmail.com"
-currency_key = "fca_live_HzT96C0XfBbHzN9OAa64AF8cmENp5vaqOliGa3u1"
+weather_key = st.secrets['apis']["weather_key"]
+sender = st.secrets['email']["sender"]
+pw = st.secrets['email']['pw']
+receiver = st.secrets['email']['receiver']
+currency_key = st.secrets['apis']['currency_key']
 
 
 def get_pokemon():
@@ -20,13 +21,12 @@ def get_pokemon():
 
     random_id = random.randint(1, total_count)
     pokemon = pb.pokemon(random_id)
-    url = None
-    print(f"ID: {pokemon.id}")
-    print(f"Nazwa: {pokemon.name.capitalize()}")
-    print(f"Wzrost: {pokemon.height}")
+    st.write(f"ID: {pokemon.id}")
+    st.write(f"Nazwa: {pokemon.name.capitalize()}")
+    st.write(f"Wzrost: {pokemon.height}")
 
     types = [t.type.name for t in pokemon.types]
-    print("Typy:", ", ".join(types))
+    st.write("Typy:", ", ".join(types))
     return {"id": pokemon.id, "name": pokemon.name.capitalize()}
 
 def check_currency():
@@ -34,7 +34,7 @@ def check_currency():
     final_currency = client.latest('USD', currencies=['PLN'])
     return final_currency['data']['PLN']
 
-print(check_currency())
+st.write(check_currency())
 
 # def send_email(rate, pokemon):
 #     port = 465 # For SSL
