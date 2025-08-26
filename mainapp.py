@@ -3,11 +3,6 @@ import streamlit as st
 import random, requests
 import os, time
 import pokebase as pb
-from PIL import Image
-from io import BytesIO
-from streamlit import spinner
-from dotenv import load_dotenv
-load_dotenv()
 
 weather_key = st.secrets['apis']["weather_key"]
 sender = st.secrets['email']["sender"]
@@ -34,28 +29,31 @@ def check_currency():
     final_currency = client.latest('USD', currencies=['PLN'])
     return final_currency['data']['PLN']
 
-st.write(check_currency())
 
-# def send_email(rate, pokemon):
-#     port = 465 # For SSL
-#     smtp_server = "smtp.gmail.com"
-#     message = f"""\
-# Subject: Kurs USD/PLN
-#
-# Aktualna wartosc: {rate}
-# Pokemon na dzisiaj:
-# ID:{pokemon['id']}. {pokemon['name']}
-# """
-#     context = ssl.create_default_context()
-#     with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
-#         server.login(sender, pw)
-#         server.sendmail(sender, receiver, message)
+def send_email(rate, pokemon):
+    port = 465 # For SSL
+    smtp_server = "smtp.gmail.com"
+    message = f"""\
+Subject: Kurs USD/PLN
 
+Aktualna wartosc: {rate}
+Pokemon na dzisiaj:
+ID:{pokemon['id']}. {pokemon['name']}
+"""
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+        server.login(sender, pw)
+        server.sendmail(sender, receiver, message)
 
+if st.button('refresh'):
+    with st.spinner('Getting data...'):
+        rate = check_currency()
+        st.write(f"USD/PLN: {rate:.4}")
+        p = get_pokemon()
+        send_email(rate, p)
 
-
-while True:
-    rate = check_currency()
-    pokemon = get_pokemon()
-    # send_email(rate, pokemon)
-    time.sleep(60)
+# while True:
+#     rate = check_currency()
+#     pokemon = get_pokemon()
+#     # send_email(rate, pokemon)
+#     time.sleep(60)

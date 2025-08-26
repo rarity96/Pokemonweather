@@ -4,9 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="23a96019-8a1e-49a9-9357-c1a748138ef9" name="Changes" comment="First commit to start the project.">
+    <list default="true" id="23a96019-8a1e-49a9-9357-c1a748138ef9" name="Changes" comment="convert some stuff from python to streamlit">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.app.py" beforeDir="false" afterPath="$PROJECT_DIR$/mainapp.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mainapp.py" beforeDir="false" afterPath="$PROJECT_DIR$/mainapp.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,6 +23,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "rarity96"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/rarity96/Pokemonweather.git",
+    "accountId": "b602c26c-586b-4679-848e-86769bf62b23"
+  }
+}]]></component>
   <component name="ProjectColorInfo"><![CDATA[{
   "associatedIndex": 4
 }]]></component>
@@ -46,6 +58,12 @@
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
     "vue.rearranger.settings.migration": "true"
+  },
+  "keyToStringList": {
+    "ChangesTree.GroupingKeys": [
+      "directory",
+      "repository"
+    ]
   }
 }]]></component>
   <component name="SharedIndexes">
@@ -63,7 +81,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1756222527240</updated>
-      <workItem from="1756222528249" duration="2306000" />
+      <workItem from="1756222528249" duration="2768000" />
     </task>
     <task id="LOCAL-00001" summary="First commit to start the project.">
       <option name="closed" value="true" />
@@ -73,7 +91,15 @@
       <option name="project" value="LOCAL" />
       <updated>1756223873681</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="convert some stuff from python to streamlit">
+      <option name="closed" value="true" />
+      <created>1756224888609</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1756224888609</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -81,7 +107,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="First commit to start the project." />
-    <option name="LAST_COMMIT_MESSAGE" value="First commit to start the project." />
+    <MESSAGE value="convert some stuff from python to streamlit" />
+    <option name="LAST_COMMIT_MESSAGE" value="convert some stuff from python to streamlit" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Pokemonweather$mainapp.coverage" NAME="mainapp Coverage Results" MODIFIED="1756224789937" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
