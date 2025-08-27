@@ -1,4 +1,0 @@
-freecurrencyapi
-requests
-pokebase
-streamlit
