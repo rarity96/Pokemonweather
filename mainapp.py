@@ -1,4 +1,5 @@
-import smtplib, ssl, freecurrencyapi
+import smtplib, ssl
+# import freecurrencyapi
 import streamlit as st
 import random, requests
 import os, time
@@ -43,10 +44,10 @@ def get_pokemon():
     st.write("Type:", ", ".join(types))
     return {"id": pokemon.id, "name": pokemon.name.capitalize()}
 
-def check_currency():
-    client = freecurrencyapi.Client(currency_key)
-    final_currency = client.latest('USD', currencies=['PLN'])
-    return final_currency['data']['PLN']
+# def check_currency():
+#     client = freecurrencyapi.Client(currency_key)
+#     final_currency = client.latest('USD', currencies=['PLN'])
+#     return final_currency['data']['PLN']
 
 def weather_to_pokemon(celc, poke):
 
