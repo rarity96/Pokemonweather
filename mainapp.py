@@ -50,7 +50,6 @@ def get_pokemon():
 #     return final_currency['data']['PLN']
 
 def weather_to_pokemon(celc, poke):
-
     if celc < 10:
         return (f"Pokemon typu zimowego{poke['name']}")
     elif celc < 16:
@@ -85,7 +84,7 @@ if st.button('refresh'):
         celc, pogoda = get_weather()
         st.spinner("checking the weather...")
         st.write(f'In {CITY}temp today is: {celc:.2f}°C')
-        final = weather_to_pokemon(celc, p)
+        st.write(weather_to_pokemon(celc, p))
 # while True:
 
 #     rate = check_currency()
