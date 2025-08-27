@@ -1,4 +1,4 @@
+streamlit
+pokebase
 freecurrencyapi
 requests
-pokebase
-streamlit
