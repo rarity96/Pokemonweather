@@ -17,6 +17,8 @@ currency_key = st.secrets['apis']['currency_key']
 CITY = str(input_city)
 
 
+
+
 def kelvin_to_celcius(temperature):
     celcius = temperature - 273.15
     return celcius
@@ -30,7 +32,7 @@ def get_weather():
     st.write(f'Opis: {result["weather"][0]["description"]}')
     st.write(f'Prędkość wiatru {result["wind"]["speed"]}m/s')
     return celc, result
-
+#
 def get_pokemon():
     total_count = 151
 
@@ -42,7 +44,34 @@ def get_pokemon():
 
     types = [t.type.name for t in pokemon.types]
     st.write("Type:", ", ".join(types))
+    img_url = get_pokemon_image(pokemon.id, prefer='official')
+    if img_url:
+        st.image(img_url, caption=pokemon.name.capitalize(),use_column_width=True)
+    else:
+        st.info("Brak obrazka dla tego poksa")
     return {"id": pokemon.id, "name": pokemon.name.capitalize()}
+
+def get_pokemon_image(pokemon_id, prefer="Official") -> str| None:
+    pokemon = pb.pokemon(pokemon_id)
+    image = pokemon.sprites
+
+    if prefer == "official":
+        try:
+            url = images.other['official-artwork']['front_default']
+            if url:
+                return url
+        except Exception:
+            pass
+    url = getattr(image, 'front-default', None)
+    if url:
+        return url
+
+    try:
+        return image.other['home']['front_default']
+    except Exception:
+        return None
+
+
 
 # def check_currency():
 #     client = freecurrencyapi.Client(currency_key)
