@@ -6,7 +6,7 @@ import os, time
 import pokebase as pb
 
 #*******************************************************
-input_city = st.text_input("Podaj miasto", placeholder="Szcecin")
+input_city = st.text_input("Podaj miasto", placeholder="Szczecin")
 #*******************************************************
 
 weather_key = st.secrets['apis']["weather_key"]
@@ -24,6 +24,9 @@ def kelvin_to_celcius(temperature):
     return celcius
 
 def get_weather():
+    if not CITY:
+        st.info("Podaj nazwe miasta by sprawdzić pogodę")
+        return None, None
     url = f'http://api.openweathermap.org/data/2.5/weather?appid={weather_key}&q={CITY}&lang=pl'
     result = requests.get(url).json()
     kelvin = result['main']['temp']
@@ -33,11 +36,19 @@ def get_weather():
     st.write(f'Prędkość wiatru {result["wind"]["speed"]}m/s')
     return celc, result
 #
-def get_pokemon():
-    total_count = 151
-
-    random_id = random.randint(1, total_count)
-    pokemon = pb.pokemon(random_id)
+def get_pokemon(preferred_type):
+    if preferred_type:
+        pokemon = get_random_pokemon_by_type(preferred_type, 151)
+        if pokemon is None:
+            random_id = random.randint(1, 151)
+            pokemon = pb.pokemon(random_id)
+    else:
+        random_id = random.randint(1,151)
+        pokemon = pb.pokemon(random_id)
+    # total_count = 151
+    #
+    # random_id = random.randint(1, total_count)
+    # pokemon = pb.pokemon(random_id)
     st.write(f"ID: {pokemon.id}")
     st.write(f"Nazwa: {pokemon.name.capitalize()}")
     st.write(f"Wzrost: {pokemon.height}")
@@ -46,7 +57,7 @@ def get_pokemon():
     st.write("Type:", ", ".join(types))
     img_url = get_pokemon_image(pokemon.id, prefer='official')
     if img_url:
-        st.image(img_url, caption=pokemon.name.capitalize(),use_column_width=True)
+        st.image(img_url,width=800, caption=None)
     else:
         st.info("Brak obrazka dla tego poksa")
     return {"id": pokemon.id, "name": pokemon.name.capitalize()}
@@ -78,42 +89,63 @@ def get_pokemon_image(pokemon_id, prefer="official") -> str| None:
 #     final_currency = client.latest('USD', currencies=['PLN'])
 #     return final_currency['data']['PLN']
 
-def weather_to_pokemon(celc, poke):
+def temp_to_type(celc: float) -> str:
     if celc < 10:
-        return (f"Pokemon typu zimowego{poke['name']}")
+        return "ice"
     elif celc < 16:
-        return (f"Pokemon typu normalnego{poke['name']}")
+        return "normal"
     elif celc < 22:
-        return (f"Pokemon typu trawiasty{poke['name']}")
+        return "grass"
     else:
-        return (f"Pokemon typu ognistego{poke['name']}")
+        return "fire"
 
+@st.cache_data
+def get_ids_by_type(type_name, max_id = 151) -> list[int]:
 
-def send_email(rate, pokemon):
-    port = 465 # For SSL
-    smtp_server = "smtp.gmail.com"
-    message = f"""\
-Subject: Kurs USD/PLN
+    typ = pb.type_(type_name)
+    ids = []
+    for i in typ.pokemon:
+        url = i.pokemon.url
+        pok_id = int(url.rstrip("/").split("/")[-1])
+        if pok_id <= max_id:
+            ids.append(pok_id)
+    return ids
 
-Aktualna wartosc: {rate:.2f}
-Pokemon na dzisiaj:
-ID:{pokemon['id']}. {pokemon['name']}
-"""
-    context = ssl.create_default_context()
-    with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
-        server.login(sender, pw)
-        server.sendmail(sender, receiver, message)
+def get_random_pokemon_by_type(type_name: str, max_id: int = 151):
+    """Losuje jednego Pokémona z listy typu; zwraca obiekt pokebase.pokemon."""
+    ids = get_ids_by_type(type_name, max_id)
+    if not ids:
+        return None
+    pid = random.choice(ids)
+    return pb.pokemon(pid)
+
+# def send_email(rate, pokemon):
+#     port = 465 # For SSL
+#     smtp_server = "smtp.gmail.com"
+#     message = f"""\
+# Subject: Kurs USD/PLN
+#
+# Aktualna wartosc: {rate:.2f}
+# Pokemon na dzisiaj:
+# ID:{pokemon['id']}. {pokemon['name']}
+# """
+#     context = ssl.create_default_context()
+#     with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+#         server.login(sender, pw)
+#         server.sendmail(sender, receiver, message)
 
 if st.button('refresh'):
     with st.spinner('Getting data...'):
         # rate = check_currency()
         # st.write(f"USD/PLN: {rate:.2f}")
-        p = get_pokemon()
-        # send_email(rate, p)
         celc, pogoda = get_weather()
-        st.spinner("checking the weather...")
+        if celc is None:
+            st.sotp()
+        wanted_type = temp_to_type(celc)
+        p = get_pokemon(preferred_type=wanted_type)
+        # send_email(rate, p)
         st.write(f'In {CITY}temp today is: {celc:.2f}°C')
-        st.write(weather_to_pokemon(celc, p))
+        st.write(f"Wylosowany poks typu {wanted_type}: {p['name']}")
 # while True:
 
 #     rate = check_currency()
