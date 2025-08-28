@@ -51,18 +51,18 @@ def get_pokemon():
         st.info("Brak obrazka dla tego poksa")
     return {"id": pokemon.id, "name": pokemon.name.capitalize()}
 
-def get_pokemon_image(pokemon_id, prefer="Official") -> str| None:
+def get_pokemon_image(pokemon_id, prefer="official") -> str| None:
     pokemon = pb.pokemon(pokemon_id)
     image = pokemon.sprites
 
     if prefer == "official":
         try:
-            url = images.other['official-artwork']['front_default']
+            url = image.other['official-artwork']['front_default']
             if url:
                 return url
         except Exception:
             pass
-    url = getattr(image, 'front-default', None)
+    url = getattr(image, 'front_default', None)
     if url:
         return url
 
