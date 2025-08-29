@@ -110,10 +110,10 @@ def get_pokemon_image(pokemon_id, prefer="official") -> str| None:
 
 
 
-# def check_currency():
-#     client = freecurrencyapi.Client(currency_key)
-#     final_currency = client.latest('USD', currencies=['PLN'])
-#     return final_currency['data']['PLN']
+def check_currency():
+     client = freecurrencyapi.Client(currency_key)
+     final_currency = client.latest('USD', currencies=['PLN'])
+     return final_currency['data']['PLN']
 
 def temp_to_type(celc: float) -> str:
     if celc < 10:
@@ -145,31 +145,31 @@ def get_random_pokemon_by_type(type_name: str, max_id: int = 151):
     pid = random.choice(ids)
     return pb.pokemon(pid)
 
-# def send_email(rate, pokemon):
-#     port = 465 # For SSL
-#     smtp_server = "smtp.gmail.com"
-#     message = f"""\
-# Subject: Kurs USD/PLN
-#
-# Aktualna wartosc: {rate:.2f}
-# Pokemon na dzisiaj:
-# ID:{pokemon['id']}. {pokemon['name']}
-# """
-#     context = ssl.create_default_context()
-#     with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
-#         server.login(sender, pw)
-#         server.sendmail(sender, receiver, message)
+def send_email(rate, pokemon):
+    port = 465 # For SSL
+   smtp_server = "smtp.gmail.com"
+    message = f"""\
+ Subject: Kurs USD/PLN
+
+Aktualna wartosc: {rate:.2f}
+ Pokemon na dzisiaj:
+ ID:{pokemon['id']}. {pokemon['name']}
+ """
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+         server.login(sender, pw)
+         server.sendmail(sender, receiver, message)
 
 if st.button('refresh'):
     with st.spinner('Getting data...'):
-        # rate = check_currency()
-        # st.write(f"USD/PLN: {rate:.2f}")
+        rate = check_currency()
+        st.write(f"USD/PLN: {rate:.2f}")
         celc, pogoda = get_weather()
         if celc is None:
             st.stop()
         wanted_type = temp_to_type(celc)
         p = get_pokemon(preferred_type=wanted_type)
-        # send_email(rate, p)
+        send_email(rate, p)
         st.write(f'In {CITY}temp today is: {celc:.2f}°C')
         st.write(f"Wylosowany poks typu {wanted_type}: {p['name']}")
         sql_con()
