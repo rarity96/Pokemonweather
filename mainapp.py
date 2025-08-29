@@ -177,13 +177,15 @@ if st.button('refresh'):
         types_str = ",".join([t.type.name for t in pb.pokemon(pokemon_id).types])
         con = sqlite_connect()
         c = con.cursor()
-        c.execute(f"INSERT or IGNORE INTO pokemon(id, name, type, if_exist) values(?, ?, ?, ?)",
+        c.execute("INSERT or IGNORE INTO pokemon(id, name, type, if_exist) values(?, ?, ?, ?)",
                   (pokemon_id, pokemon_name, types_str, 'True'))
         con.commit()
         with st.expander("Pokémony w bazie"):
             show = c.execute("SELECT id, name, type FROM pokemon ORDER BY id").fetchall()
             st.write(show)
-
+        if st.button('delete db'):
+            c.execute("DROP IF EXISTS TABLE pokemon")
+            con.commit()
 # while True:
 
 #     rate = check_currency()
