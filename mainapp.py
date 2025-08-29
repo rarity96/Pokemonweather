@@ -183,9 +183,13 @@ if st.button('refresh'):
         with st.expander("Pokémony w bazie"):
             show = c.execute("SELECT id, name, type FROM pokemon ORDER BY id").fetchall()
             st.write(show)
-        if st.button('delete db'):
-            c.execute("DROP IF EXISTS TABLE pokemon")
-            con.commit()
+if st.button('delete db'):
+    con = sqlite_connect()
+    c = con.cursor()
+    c.execute("DROP TABLE IF EXISTS pokemon")
+    con.commit()
+    con.commit()
+    st.success("Tabela 'pokemon' została usunięta.")
 # while True:
 
 #     rate = check_currency()
