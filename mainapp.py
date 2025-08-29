@@ -20,8 +20,9 @@ CITY = str(input_city)
 
 @st.cache_resource
 def sqlite_connect():
-    con = sqlite3.connect('pokeweather.db')
+    con = sqlite3.connect('pokeweather.db', check_same_thread=False)
     con.execute("PRAGMA foreign_keys = ON")
+    con.execute("PRAGMA journal_mode = WAL")
     return con
 
 def sql_con():
@@ -182,6 +183,7 @@ if st.button('refresh'):
         with st.expander("Pokémony w bazie"):
             show = c.execute("SELECT id, name, type FROM pokemon ORDER BY id").fetchall()
             st.write(show)
+
 # while True:
 
 #     rate = check_currency()
