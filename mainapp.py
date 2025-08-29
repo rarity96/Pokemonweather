@@ -1,9 +1,41 @@
 import smtplib, ssl
+import sqlite3
 # import freecurrencyapi
 import streamlit as st
 import random, requests
 import os, time
 import pokebase as pb
+
+con = sqlite3.connect('pokeweather.db')
+
+c = con.cursor()
+
+file_check = os.path.exists('pokeweather.db')
+if file_check == False:
+    c.execute("""CREATE TABLE pokemon (
+        id  INTEGER PRIMARY KEY,
+        name  TEXT,
+        type TEXT,
+        if_exist NULL
+    )""")
+
+check_table_pokemon = c.execute("""SELECT name 
+                                    FROM sqlite_master
+                                    WHERE type='table' AND name='pokemon'""")
+fetch_check_table_pokemon = c.fetchone()
+
+if fetch_check_table_pokemon == None:
+    print("Nie ma takiej tabeli danych")
+else:
+    c.execute("INSERT INTO pokemon VALUES ('4', 'Rapidash', 'Fire', 'true')")
+
+
+
+c.execute("SELECT * FROM pokemon")
+print(c.fetchall())
+
+con.commit()
+con.close()
 
 #*******************************************************
 input_city = st.text_input("Podaj miasto", placeholder="Szczecin")
