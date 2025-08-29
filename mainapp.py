@@ -3,39 +3,9 @@ import sqlite3
 # import freecurrencyapi
 import streamlit as st
 import random, requests
-import os, time
+import os
 import pokebase as pb
-
-con = sqlite3.connect('pokeweather.db')
-
-c = con.cursor()
-
-file_check = os.path.exists('pokeweather.db')
-if file_check == False:
-    c.execute("""CREATE TABLE pokemon (
-        id  INTEGER PRIMARY KEY,
-        name  TEXT,
-        type TEXT,
-        if_exist NULL
-    )""")
-
-check_table_pokemon = c.execute("""SELECT name 
-                                    FROM sqlite_master
-                                    WHERE type='table' AND name='pokemon'""")
-fetch_check_table_pokemon = c.fetchone()
-
-if fetch_check_table_pokemon == None:
-    print("Nie ma takiej tabeli danych")
-else:
-    c.execute("INSERT INTO pokemon VALUES ('4', 'Rapidash', 'Fire', 'true')")
-
-
-
-c.execute("SELECT * FROM pokemon")
-print(c.fetchall())
-
-con.commit()
-con.close()
+from datetime import datetime
 
 #*******************************************************
 input_city = st.text_input("Podaj miasto", placeholder="Szczecin")
@@ -48,7 +18,29 @@ receiver = st.secrets['email']['receiver']
 currency_key = st.secrets['apis']['currency_key']
 CITY = str(input_city)
 
+@st.cache_resource
+def sqlite_connect():
+    con = sqlite3.connect('pokeweather.db')
+    con.execute("PRAGMA foreign_keys = ON")
+    return con
 
+def sql_con():
+    con = sqlite_connect()
+    c = con.cursor()
+    check_table_pokemon = c.execute("""SELECT name 
+                                        FROM sqlite_master
+                                        WHERE type='table' AND name='pokemon'""")
+    fetch_check_table_pokemon = c.fetchone()
+
+    if fetch_check_table_pokemon == None:
+        c.execute("""CREATE TABLE pokemon (
+                id  INTEGER PRIMARY KEY,
+                name  TEXT UNIQUE,
+                type TEXT,
+                if_exist TEXT
+            )""")
+
+    con.commit()
 
 
 def kelvin_to_celcius(temperature):
@@ -172,12 +164,24 @@ if st.button('refresh'):
         # st.write(f"USD/PLN: {rate:.2f}")
         celc, pogoda = get_weather()
         if celc is None:
-            st.sotp()
+            st.stop()
         wanted_type = temp_to_type(celc)
         p = get_pokemon(preferred_type=wanted_type)
         # send_email(rate, p)
         st.write(f'In {CITY}temp today is: {celc:.2f}°C')
         st.write(f"Wylosowany poks typu {wanted_type}: {p['name']}")
+        sql_con()
+        pokemon_id = p['id']
+        pokemon_name = p['name']
+        types_str = ",".join([t.type.name for t in pb.pokemon(pokemon_id).types])
+        con = sqlite_connect()
+        c = con.cursor()
+        c.execute(f"INSERT or IGNORE INTO pokemon(id, name, type, if_exist) values(?, ?, ?, ?)",
+                  (pokemon_id, pokemon_name, types_str, 'True'))
+        con.commit()
+        with st.expander("Pokémony w bazie"):
+            show = c.execute("SELECT id, name, type FROM pokemon ORDER BY id").fetchall()
+            st.write(show)
 # while True:
 
 #     rate = check_currency()
