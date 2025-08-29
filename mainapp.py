@@ -1,4 +1,4 @@
-import smtplib, ssl
+# import smtplib, ssl
 import sqlite3
 # import freecurrencyapi
 import streamlit as st
@@ -39,7 +39,8 @@ def sql_con():
                 id  INTEGER PRIMARY KEY,
                 name  TEXT UNIQUE,
                 type TEXT,
-                if_exist TEXT
+                lvl INTEGER,
+                total_exp INTEGER
             )""")
 
     con.commit()
@@ -63,6 +64,8 @@ def get_weather():
     return celc, result
 #
 def get_pokemon(preferred_type):
+    lvl = 1
+    exp = 0
     if preferred_type:
         pokemon = get_random_pokemon_by_type(preferred_type, 151)
         if pokemon is None:
@@ -86,7 +89,7 @@ def get_pokemon(preferred_type):
         st.image(img_url,width=800, caption=None)
     else:
         st.info("Brak obrazka dla tego poksa")
-    return {"id": pokemon.id, "name": pokemon.name.capitalize()}
+    return {"id": pokemon.id, "name": pokemon.name.capitalize(), "lvl": lvl, "exp":exp}
 
 def get_pokemon_image(pokemon_id, prefer="official") -> str| None:
     pokemon = pb.pokemon(pokemon_id)
@@ -108,12 +111,27 @@ def get_pokemon_image(pokemon_id, prefer="official") -> str| None:
     except Exception:
         return None
 
+def calculate_lvl(pokemon_id, pokemon_name):
+    con = sqlite_connect()
+    c = con.cursor()
+    check_if_exist = c.execute("SELECT lvl FROM pokemon WHERE id = ?", (pokemon_id,)).fetchone()
+    if check_if_exist is None:
+        st.info(f"Gratulacje, złapałeś {pokemon_name}!")
+        return None
+    current_lvl = check_if_exist[0]
+    if current_lvl is not None and current_lvl < 2:
+        c.execute("UPDATE pokemon SET lvl = ? WHERE id = ?", (2, pokemon_id))
+        con.commit()
+        current_lvl = 2
+        st.info(f"Gratulacje, twój {pokemon_name} awansował na {current_lvl} poziom")
+    else:
+        st.write(f"poziom {pokemon_name}: {current_lvl}")
+    return current_lvl
 
-
-def check_currency():
-     client = freecurrencyapi.Client(currency_key)
-     final_currency = client.latest('USD', currencies=['PLN'])
-     return final_currency['data']['PLN']
+# def check_currency():
+#      client = freecurrencyapi.Client(currency_key)
+#      final_currency = client.latest('USD', currencies=['PLN'])
+#      return final_currency['data']['PLN']
 
 def temp_to_type(celc: float) -> str:
     if celc < 10:
@@ -145,57 +163,59 @@ def get_random_pokemon_by_type(type_name: str, max_id: int = 151):
     pid = random.choice(ids)
     return pb.pokemon(pid)
 
-def send_email(rate, pokemon):
-    port = 465 # For SSL
-   smtp_server = "smtp.gmail.com"
-    message = f"""\
- Subject: Kurs USD/PLN
-
-Aktualna wartosc: {rate:.2f}
- Pokemon na dzisiaj:
- ID:{pokemon['id']}. {pokemon['name']}
- """
-    context = ssl.create_default_context()
-    with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
-         server.login(sender, pw)
-         server.sendmail(sender, receiver, message)
+# def send_email(rate, pokemon):
+#     port = 465 # For SSL
+#    smtp_server = "smtp.gmail.com"
+#     message = f"""\
+#  Subject: Kurs USD/PLN
+#
+# Aktualna wartosc: {rate:.2f}
+#  Pokemon na dzisiaj:
+#  ID:{pokemon['id']}. {pokemon['name']}
+#  """
+#     context = ssl.create_default_context()
+#     with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+#          server.login(sender, pw)
+#          server.sendmail(sender, receiver, message)
 
 if st.button('refresh'):
     with st.spinner('Getting data...'):
-        rate = check_currency()
-        st.write(f"USD/PLN: {rate:.2f}")
+        # rate = check_currency()
+        # st.write(f"USD/PLN: {rate:.2f}")
         celc, pogoda = get_weather()
         if celc is None:
             st.stop()
         wanted_type = temp_to_type(celc)
         p = get_pokemon(preferred_type=wanted_type)
-        send_email(rate, p)
+        # send_email(rate, p)
         st.write(f'In {CITY}temp today is: {celc:.2f}°C')
         st.write(f"Wylosowany poks typu {wanted_type}: {p['name']}")
         sql_con()
+
         pokemon_id = p['id']
         pokemon_name = p['name']
+        lvl = p['lvl']
+        total_exp = p['exp']
         types_str = ",".join([t.type.name for t in pb.pokemon(pokemon_id).types])
         con = sqlite_connect()
         c = con.cursor()
-        c.execute("INSERT or IGNORE INTO pokemon(id, name, type, if_exist) values(?, ?, ?, ?)",
-                  (pokemon_id, pokemon_name, types_str, 'True'))
+        before = con.total_changes
+        c.execute("INSERT OR IGNORE INTO pokemon(id, name, type, lvl, total_exp) values(?, ?, ?, ?, ?)",
+                  (pokemon_id, pokemon_name, types_str , lvl, total_exp))
         con.commit()
-        st.write("Pokazwyanie list")
-        with st.expander("Pokémony w bazie"):
-            show = c.execute("SELECT id, name, type FROM pokemon ORDER BY id").fetchall()
-            st.write(show)
+        inserted = (con.total_changes - before) > 0
+        if not inserted:
+            c.execute("UPDATE pokemon SET lvl = CASE WHEN lvl < 2 THEN 2 ELSE lvl END WHERE id = ?", (pokemon_id,))
+            con.commit()
 
-            st.write("pokazywanie w tabeli:")
         with st.expander("Pokémony w bazie"):
-            rows = c.execute("SELECT id, name, type FROM pokemon ORDER BY id").fetchall()
-            df = pd.DataFrame(rows, columns=["ID", "Nazwa", "Typ"])
+            rows = c.execute("SELECT id, name, type, lvl, total_exp FROM pokemon ORDER BY id").fetchall()
+            df = pd.DataFrame(rows, columns=["ID", "Nazwa", "Typ", 'lvl', 'total_exp'])
             st.dataframe(df)
 if st.button('delete db'):
     con = sqlite_connect()
     c = con.cursor()
     c.execute("DROP TABLE IF EXISTS pokemon")
-    con.commit()
     con.commit()
     st.success("Tabela 'pokemon' została usunięta.")
 # while True:
