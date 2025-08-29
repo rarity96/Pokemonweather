@@ -3,6 +3,7 @@ import sqlite3
 # import freecurrencyapi
 import streamlit as st
 import random, requests
+import pandas as pd
 import os
 import pokebase as pb
 from datetime import datetime
@@ -180,9 +181,16 @@ if st.button('refresh'):
         c.execute("INSERT or IGNORE INTO pokemon(id, name, type, if_exist) values(?, ?, ?, ?)",
                   (pokemon_id, pokemon_name, types_str, 'True'))
         con.commit()
+        st.write("Pokazwyanie list")
         with st.expander("Pokémony w bazie"):
             show = c.execute("SELECT id, name, type FROM pokemon ORDER BY id").fetchall()
             st.write(show)
+
+            st.write("pokazywanie w tabeli:")
+        with st.expander("Pokémony w bazie"):
+            rows = c.execute("SELECT id, name, type FROM pokemon ORDER BY id").fetchall()
+            df = pd.DataFrame(rows, columns=["ID", "Nazwa", "Typ"])
+            st.dataframe(df)
 if st.button('delete db'):
     con = sqlite_connect()
     c = con.cursor()
