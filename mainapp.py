@@ -9,7 +9,7 @@ import pokebase as pb
 from datetime import datetime
 
 #*******************************************************
-input_city = st.text_input("Podaj miasto", placeholder="Szczecin")
+input_city = st.text_input("Podaj miasto", placeholder="Nazwa miasta")
 #*******************************************************
 
 weather_key = st.secrets['apis']["weather_key"]
@@ -40,7 +40,9 @@ def sql_con():
                 name  TEXT UNIQUE,
                 type TEXT,
                 lvl INTEGER,
-                total_exp INTEGER
+                total_exp INTEGER,
+                city text,
+                temp REAL
             )""")
 
     con.commit()
@@ -58,10 +60,11 @@ def get_weather():
     result = requests.get(url).json()
     kelvin = result['main']['temp']
     celc = kelvin_to_celcius(kelvin)
+
     st.write(f'Temp aktualnie: {celc:.2f}°C')
     st.write(f'Opis: {result["weather"][0]["description"]}')
     st.write(f'Prędkość wiatru {result["wind"]["speed"]}m/s')
-    return celc, result
+    return celc, result,
 #
 def get_pokemon(preferred_type):
     lvl = 1
@@ -156,7 +159,6 @@ def get_ids_by_type(type_name, max_id = 151) -> list[int]:
     return ids
 
 def get_random_pokemon_by_type(type_name: str, max_id: int = 151):
-    """Losuje jednego Pokémona z listy typu; zwraca obiekt pokebase.pokemon."""
     ids = get_ids_by_type(type_name, max_id)
     if not ids:
         return None
@@ -178,7 +180,7 @@ def get_random_pokemon_by_type(type_name: str, max_id: int = 151):
 #          server.login(sender, pw)
 #          server.sendmail(sender, receiver, message)
 
-if st.button('refresh'):
+if st.button('Sprawdz pogode'):
     with st.spinner('Getting data...'):
         # rate = check_currency()
         # st.write(f"USD/PLN: {rate:.2f}")
@@ -188,7 +190,7 @@ if st.button('refresh'):
         wanted_type = temp_to_type(celc)
         p = get_pokemon(preferred_type=wanted_type)
         # send_email(rate, p)
-        st.write(f'In {CITY}temp today is: {celc:.2f}°C')
+        st.write(f'W {CITY} temperatura dzisiaj to: {celc:.1f}°C')
         st.write(f"Wylosowany poks typu {wanted_type}: {p['name']}")
         sql_con()
 
@@ -200,24 +202,31 @@ if st.button('refresh'):
         con = sqlite_connect()
         c = con.cursor()
         before = con.total_changes
-        c.execute("INSERT OR IGNORE INTO pokemon(id, name, type, lvl, total_exp) values(?, ?, ?, ?, ?)",
-                  (pokemon_id, pokemon_name, types_str , lvl, total_exp))
+        c.execute("INSERT OR IGNORE INTO pokemon(id, name, type, lvl, total_exp, city, temp) values(?, ?, ?, ?, ?, ?,?)",
+                  (pokemon_id, pokemon_name, types_str , lvl, total_exp, CITY, celc))
         con.commit()
         inserted = (con.total_changes - before) > 0
         if not inserted:
             c.execute("UPDATE pokemon SET lvl = CASE WHEN lvl < 2 THEN 2 ELSE lvl END WHERE id = ?", (pokemon_id,))
             con.commit()
 
-        with st.expander("Pokémony w bazie"):
-            rows = c.execute("SELECT id, name, type, lvl, total_exp FROM pokemon ORDER BY id").fetchall()
-            df = pd.DataFrame(rows, columns=["ID", "Nazwa", "Typ", 'lvl', 'total_exp'])
-            st.dataframe(df)
-if st.button('delete db'):
+with st.expander("Pokémony w bazie"):
     con = sqlite_connect()
     c = con.cursor()
-    c.execute("DROP TABLE IF EXISTS pokemon")
-    con.commit()
-    st.success("Tabela 'pokemon' została usunięta.")
+    try:
+        rows = c.execute("SELECT id, name, type, lvl, total_exp, city, temp FROM pokemon ORDER BY id").fetchall()
+        df = pd.DataFrame(rows, columns=["ID", "Nazwa", "Typ", 'lvl', 'total_exp', 'miasto', 'zarejestrowana temp'])
+        st.dataframe(df)
+        if st.button('delete db'):
+            con = sqlite_connect()
+            c = con.cursor()
+            c.execute("DROP TABLE IF EXISTS pokemon")
+            con.commit()
+            st.success("Tabela 'pokemon' została usunięta.")
+            st.rerun()
+    except Exception:
+        st.info("Brak zlapancyh pokemonow")
+
 # while True:
 
 #     rate = check_currency()
