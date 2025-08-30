@@ -117,11 +117,12 @@ def calculate_exp(pokemon_id):
     con = sqlite_connect()
     c = con.cursor()
     check_exp = c.execute("SELECT total_exp FROM pokemon WHERE id = ?", (pokemon_id,)).fetchone()
-    if check_exp[0] is None or check_exp[0] < 2:
+    current_exp = 0 if (check_exp is None or check_exp[0] is None) else check_exp[0]
+    if current_exp < 2:
         return 1
-    elif check_exp[0] < 4:
+    elif current_exp < 4:
         return 2
-    elif check_exp[0] < 6:
+    elif current_exp < 6:
         return 3
     else:
         return 4
