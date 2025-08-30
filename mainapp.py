@@ -66,7 +66,6 @@ def get_weather():
     st.write(f'Prędkość wiatru {result["wind"]["speed"]}m/s')
     return celc, result,
 
-@st.cache_resource
 def get_pokemon(preferred_type):
     if preferred_type:
         pokemon = get_random_pokemon_by_type(preferred_type, 151)
