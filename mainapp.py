@@ -39,8 +39,8 @@ def sql_con():
                 id  INTEGER PRIMARY KEY,
                 name  TEXT UNIQUE,
                 type TEXT,
-                lvl INTEGER,
-                total_exp INTEGER,
+                lvl INTEGER DEFAULT 1,
+                total_exp INTEGER DEFAULT 0,
                 city text,
                 temp REAL
             )""")
@@ -49,8 +49,8 @@ def sql_con():
 
 
 def kelvin_to_celcius(temperature):
-    celcius = temperature - 273.15
-    return celcius
+        celcius = temperature - 273.15
+        return celcius
 
 def get_weather():
     if not CITY:
@@ -61,14 +61,13 @@ def get_weather():
     kelvin = result['main']['temp']
     celc = kelvin_to_celcius(kelvin)
 
-    st.write(f'Temp aktualnie: {celc:.2f}°C')
+    st.write(f'Temp aktualnie: {celc:.1f}°C')
     st.write(f'Opis: {result["weather"][0]["description"]}')
     st.write(f'Prędkość wiatru {result["wind"]["speed"]}m/s')
     return celc, result,
-#
+
+@st.cache_resource
 def get_pokemon(preferred_type):
-    lvl = 1
-    exp = 0
     if preferred_type:
         pokemon = get_random_pokemon_by_type(preferred_type, 151)
         if pokemon is None:
@@ -92,7 +91,7 @@ def get_pokemon(preferred_type):
         st.image(img_url,width=800, caption=None)
     else:
         st.info("Brak obrazka dla tego poksa")
-    return {"id": pokemon.id, "name": pokemon.name.capitalize(), "lvl": lvl, "exp":exp}
+    return {"id": pokemon.id, "name": pokemon.name.capitalize()}
 
 def get_pokemon_image(pokemon_id, prefer="official") -> str| None:
     pokemon = pb.pokemon(pokemon_id)
@@ -114,22 +113,40 @@ def get_pokemon_image(pokemon_id, prefer="official") -> str| None:
     except Exception:
         return None
 
-def calculate_lvl(pokemon_id, pokemon_name):
+def calculate_exp(pokemon_id):
     con = sqlite_connect()
     c = con.cursor()
-    check_if_exist = c.execute("SELECT lvl FROM pokemon WHERE id = ?", (pokemon_id,)).fetchone()
-    if check_if_exist is None:
-        st.info(f"Gratulacje, złapałeś {pokemon_name}!")
-        return None
-    current_lvl = check_if_exist[0]
-    if current_lvl is not None and current_lvl < 2:
-        c.execute("UPDATE pokemon SET lvl = ? WHERE id = ?", (2, pokemon_id))
-        con.commit()
-        current_lvl = 2
-        st.info(f"Gratulacje, twój {pokemon_name} awansował na {current_lvl} poziom")
+    check_exp = c.execute("SELECT total_exp FROM pokemon WHERE id = ?", (pokemon_id,)).fetchone()
+    if check_exp[0] is None or check_exp[0] < 2:
+        return 1
+    elif check_exp[0] < 4:
+        return 2
+    elif check_exp[0] < 6:
+        return 3
     else:
-        st.write(f"poziom {pokemon_name}: {current_lvl}")
-    return current_lvl
+        return 4
+
+# def calculate_exp(pokemon_id):
+#     con = sqlite_connect()
+#     c = con.cursor()
+#
+#
+# def calculate_lvl(pokemon_id, pokemon_name):
+#     con = sqlite_connect()
+#     c = con.cursor()
+#     check_if_exist = c.execute("SELECT lvl FROM pokemon WHERE id = ?", (pokemon_id,)).fetchone()
+#     if check_if_exist is None:
+#         st.info(f"Gratulacje, złapałeś {pokemon_name}!")
+#         return None
+#     current_lvl = check_if_exist[0]
+#     if current_lvl is not None and current_lvl < 2:
+#         c.execute("UPDATE pokemon SET lvl = ? WHERE id = ?", (2, pokemon_id))
+#         con.commit()
+#         current_lvl = 2
+#         st.info(f"Gratulacje, twój {pokemon_name} awansował na {current_lvl} poziom")
+#     else:
+#         st.write(f"poziom {pokemon_name}: {current_lvl}")
+#     return current_lvl
 
 # def check_currency():
 #      client = freecurrencyapi.Client(currency_key)
@@ -193,21 +210,20 @@ if st.button('Sprawdz pogode'):
         st.write(f'W {CITY} temperatura dzisiaj to: {celc:.1f}°C')
         st.write(f"Wylosowany poks typu {wanted_type}: {p['name']}")
         sql_con()
-
         pokemon_id = p['id']
+        new_lvl = calculate_exp(pokemon_id)
         pokemon_name = p['name']
-        lvl = p['lvl']
-        total_exp = p['exp']
         types_str = ",".join([t.type.name for t in pb.pokemon(pokemon_id).types])
         con = sqlite_connect()
         c = con.cursor()
         before = con.total_changes
-        c.execute("INSERT OR IGNORE INTO pokemon(id, name, type, lvl, total_exp, city, temp) values(?, ?, ?, ?, ?, ?,?)",
-                  (pokemon_id, pokemon_name, types_str , lvl, total_exp, CITY, celc))
+        c.execute("INSERT OR IGNORE INTO pokemon(id, name, type, city, temp) values(?, ?, ?, ?, ?)",
+                  (pokemon_id, pokemon_name, types_str, CITY, celc))
         con.commit()
         inserted = (con.total_changes - before) > 0
         if not inserted:
-            c.execute("UPDATE pokemon SET lvl = CASE WHEN lvl < 2 THEN 2 ELSE lvl END WHERE id = ?", (pokemon_id,))
+            c.execute("UPDATE pokemon SET total_exp = total_exp + 1, lvl = ? WHERE id = ?", (new_lvl, pokemon_id,))
+            # c.execute("UPDATE pokemon SET lvl = ? WHERE id = ?", (new_lvl, pokemon_id,))
             con.commit()
 
 with st.expander("Pokémony w bazie"):
@@ -215,7 +231,7 @@ with st.expander("Pokémony w bazie"):
     c = con.cursor()
     try:
         rows = c.execute("SELECT id, name, type, lvl, total_exp, city, temp FROM pokemon ORDER BY id").fetchall()
-        df = pd.DataFrame(rows, columns=["ID", "Nazwa", "Typ", 'lvl', 'total_exp', 'miasto', 'zarejestrowana temp'])
+        df = pd.DataFrame(rows, columns=["ID", "Nazwa", "Typ", 'lvl', 'total_exp', 'miasto gdzie złapano', 'zarejestrowana temp'])
         st.dataframe(df)
         if st.button('delete db'):
             con = sqlite_connect()
