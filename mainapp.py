@@ -1,5 +1,6 @@
-# import smtplib, ssl
+import smtplib, ssl
 import sqlite3
+from email.message import EmailMessage
 # import freecurrencyapi
 import streamlit as st
 import random, requests
@@ -183,22 +184,28 @@ def get_random_pokemon_by_type(type_name: str, max_id: int = 151):
     pid = random.choice(ids)
     return pb.pokemon(pid)
 
-# def send_email(rate, pokemon):
-#     port = 465 # For SSL
-#    smtp_server = "smtp.gmail.com"
-#     message = f"""\
-#  Subject: Kurs USD/PLN
-#
-# Aktualna wartosc: {rate:.2f}
-#  Pokemon na dzisiaj:
-#  ID:{pokemon['id']}. {pokemon['name']}
-#  """
-#     context = ssl.create_default_context()
-#     with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
-#          server.login(sender, pw)
-#          server.sendmail(sender, receiver, message)
+def send_email(mail_content: str, mail_back: str):
+    port = 465 # For SSL
+    smtp_server = "smtp.gmail.com"
+    msg = EmailMessage()
+    msg["Subject"] = "Wiadomość z pokeweather"
+    msg["from"] = sender
+    msg["to"] = receiver
+
+    message = f"""
+    {mail_content}
+    ___________
+    Wiadomość od:
+    {mail_back or "(Brak)"}
+ """
+    msg.set_content(message)
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+         server.login(sender, pw)
+         server.send_message(msg)
+
 st.sidebar.title("Nawigacja")
-page = st.sidebar.radio("Wybierz podstrone", ["Strona główna", "Pokedex", "Statystyki", "Release notes"])
+page = st.sidebar.radio("Wybierz podstrone", ["Strona główna", "Pokedex", "Statystyki", "Release notes", "Kontakt"])
 if page == "Strona główna":
     # *******************************************************
     input_city = st.text_input("Podaj miasto", placeholder="Nazwa miasta")
@@ -255,6 +262,21 @@ elif page == "Statystyki":
 
 elif page == "Release notes":
     st.write("Tutaj będa opisy aktualizacji, co zostało dodane/zmienione. :) ")
+
+elif page == "Kontakt":
+    st.write("Jeśli masz jakiś pomysł, lub znalazłeś bład możesz to zgłosić tutaj")
+    mail_content = st.text_area("Treść wiadomości")
+    mail_back = st.text_input("Twój mail")
+    if st.button("Wyślij"):
+        if not mail_content or not mail_content.strip():
+            st.info("Nie można wysłać pustego maila")
+        else:
+            try:
+                send_email(mail_content, mail_back)
+                st.success("Wiadomość wysłana, dzięki za wszelki feedback! :)")
+            except Exception as e:
+                st.error(f"Nie udało się wysłać wiadomośći: {e}")
+
 
 
 # while True:
