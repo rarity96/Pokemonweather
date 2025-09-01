@@ -8,16 +8,12 @@ import os
 import pokebase as pb
 from datetime import datetime
 
-#*******************************************************
-input_city = st.text_input("Podaj miasto", placeholder="Nazwa miasta")
-#*******************************************************
-
 weather_key = st.secrets['apis']["weather_key"]
 sender = st.secrets['email']["sender"]
 pw = st.secrets['email']['pw']
 receiver = st.secrets['email']['receiver']
 currency_key = st.secrets['apis']['currency_key']
-CITY = str(input_city)
+
 
 @st.cache_resource
 def sqlite_connect():
@@ -60,11 +56,11 @@ def get_weather():
     result = requests.get(url).json()
     kelvin = result['main']['temp']
     celc = kelvin_to_celcius(kelvin)
-
+    desc = result['weather'][0]['description']
     st.write(f'Temp aktualnie: {celc:.1f}°C')
     st.write(f'Opis: {result["weather"][0]["description"]}')
     st.write(f'Prędkość wiatru {result["wind"]["speed"]}m/s')
-    return celc, result,
+    return celc, result, desc,
 
 def get_pokemon(preferred_type):
     if preferred_type:
@@ -153,8 +149,13 @@ def calculate_exp(pokemon_id):
 #      final_currency = client.latest('USD', currencies=['PLN'])
 #      return final_currency['data']['PLN']
 
-def temp_to_type(celc: float) -> str:
-    if celc < 10:
+def temp_to_type(celc: float, desc) -> str:
+    desc = desc.lower()
+    if "mgła" in desc or "zamglenie" in desc:
+        return "ghost"
+    elif "deszcz" in desc or "mżawka" in desc:
+        return "water"
+    elif celc < 10:
         return "ice"
     elif celc < 16:
         return "normal"
@@ -196,52 +197,65 @@ def get_random_pokemon_by_type(type_name: str, max_id: int = 151):
 #     with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
 #          server.login(sender, pw)
 #          server.sendmail(sender, receiver, message)
-
-if st.button('Sprawdz pogode'):
-    with st.spinner('Getting data...'):
-        # rate = check_currency()
-        # st.write(f"USD/PLN: {rate:.2f}")
-        celc, pogoda = get_weather()
-        if celc is None:
-            st.stop()
-        wanted_type = temp_to_type(celc)
-        p = get_pokemon(preferred_type=wanted_type)
-        # send_email(rate, p)
-        st.write(f'W {CITY} temperatura dzisiaj to: {celc:.1f}°C')
-        st.write(f"Wylosowany poks typu {wanted_type}: {p['name']}")
-        sql_con()
-        pokemon_id = p['id']
-        new_lvl = calculate_exp(pokemon_id)
-        pokemon_name = p['name']
-        types_str = ",".join([t.type.name for t in pb.pokemon(pokemon_id).types])
-        con = sqlite_connect()
-        c = con.cursor()
-        before = con.total_changes
-        c.execute("INSERT OR IGNORE INTO pokemon(id, name, type, city, temp) values(?, ?, ?, ?, ?)",
-                  (pokemon_id, pokemon_name, types_str, CITY, celc))
-        con.commit()
-        inserted = (con.total_changes - before) > 0
-        if not inserted:
-            c.execute("UPDATE pokemon SET total_exp = total_exp + 1, lvl = ? WHERE id = ?", (new_lvl, pokemon_id,))
-            # c.execute("UPDATE pokemon SET lvl = ? WHERE id = ?", (new_lvl, pokemon_id,))
-            con.commit()
-
-with st.expander("Pokémony w bazie"):
-    con = sqlite_connect()
-    c = con.cursor()
-    try:
-        rows = c.execute("SELECT id, name, type, lvl, total_exp, city, temp FROM pokemon ORDER BY id").fetchall()
-        df = pd.DataFrame(rows, columns=["ID", "Nazwa", "Typ", 'lvl', 'total_exp', 'miasto gdzie złapano', 'zarejestrowana temp'])
-        st.dataframe(df)
-        if st.button('delete db'):
+st.sidebar.title("Nawigacja")
+page = st.sidebar.radio("Wybierz podstrone", ["Strona główna", "Pokedex", "Statystyki", "Release notes"])
+if page == "Strona główna":
+    # *******************************************************
+    input_city = st.text_input("Podaj miasto", placeholder="Nazwa miasta")
+    CITY = str(input_city).capitalize()
+    # *******************************************************
+    if st.button('Sprawdz pogode'):
+        with st.spinner('Getting data...'):
+            # rate = check_currency()
+            # st.write(f"USD/PLN: {rate:.2f}")
+            celc, pogoda, desc = get_weather()
+            if celc is None:
+                st.stop()
+            wanted_type = temp_to_type(celc, desc)
+            p = get_pokemon(preferred_type=wanted_type)
+            # send_email(rate, p)
+            st.write(f'W {CITY} temperatura dzisiaj to: {celc:.1f}°C')
+            st.write(f"Wylosowany poks typu {wanted_type}: {p['name']}")
+            sql_con()
+            pokemon_id = p['id']
+            new_lvl = calculate_exp(pokemon_id)
+            pokemon_name = p['name']
+            types_str = ",".join([t.type.name for t in pb.pokemon(pokemon_id).types])
             con = sqlite_connect()
             c = con.cursor()
-            c.execute("DROP TABLE IF EXISTS pokemon")
+            before = con.total_changes
+            c.execute("INSERT OR IGNORE INTO pokemon(id, name, type, city, temp) values(?, ?, ?, ?, ?)",
+                      (pokemon_id, pokemon_name, types_str, CITY, celc))
             con.commit()
-            st.success("Tabela 'pokemon' została usunięta.")
-            st.rerun()
-    except Exception:
-        st.info("Brak zlapancyh pokemonow")
+            inserted = (con.total_changes - before) > 0
+            if not inserted:
+                c.execute("UPDATE pokemon SET total_exp = total_exp + 1, lvl = ? WHERE id = ?", (new_lvl, pokemon_id,))
+                # c.execute("UPDATE pokemon SET lvl = ? WHERE id = ?", (new_lvl, pokemon_id,))
+                con.commit()
+elif page == "Pokedex":
+    with st.expander("Pokémony w bazie"):
+        con = sqlite_connect()
+        c = con.cursor()
+        try:
+            rows = c.execute("SELECT id, name, type, lvl, total_exp, city, temp FROM pokemon ORDER BY id").fetchall()
+            df = pd.DataFrame(rows, columns=["ID", "Nazwa", "Typ", 'lvl', 'total_exp', 'miasto gdzie złapano',
+                                             'zarejestrowana temp'])
+            st.dataframe(df)
+            if st.button('delete db'):
+                con = sqlite_connect()
+                c = con.cursor()
+                c.execute("DROP TABLE IF EXISTS pokemon")
+                con.commit()
+                st.success("Tabela 'pokemon' została usunięta.")
+                st.rerun()
+        except Exception:
+            st.info("Brak zlapancyh pokemonow")
+elif page == "Statystyki":
+    st.write("Do przegladania statystyk, wyświetlania wykresów i danych.")
+
+elif page == "Release notes":
+    st.write("Tutaj będa opisy aktualizacji, co zostało dodane/zmienione. :) ")
+
 
 # while True:
 
