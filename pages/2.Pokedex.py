@@ -1,5 +1,7 @@
 import streamlit as st
 from mainapp import sqlite_connect, pd
+st.write("Pokedex")
+
 with st.expander("Pokémony w bazie"):
     con = sqlite_connect()
     c = con.cursor()
