@@ -40,7 +40,8 @@ def sql_con():
                 lvl INTEGER DEFAULT 1,
                 total_exp INTEGER DEFAULT 0,
                 city text,
-                temp REAL
+                temp REAL,
+                image_url TEXT
             )""")
 
     con.commit()
@@ -100,7 +101,7 @@ def get_weather():
 # *******************************************************
 col1, col2 = st.columns([1, 0.12])
 with col1:
- input_city = st.text_input("Podaj miasto", placeholder="Nazwa miasta")
+ input_city = st.text_input("Podaj miasto", placeholder="Nazwa miasta", key="Input_city_mainpage")
 with col2:
  with st.popover("🛈", use_container_width=True):
      st.markdown("###Zasady działania")
@@ -138,8 +139,8 @@ if st.button('Sprawdz pogode'):
      con = sqlite_connect()
      c = con.cursor()
      before = con.total_changes
-     c.execute("INSERT OR IGNORE INTO pokemon(id, name, type, city, temp) values(?, ?, ?, ?, ?)",
-               (pokemon_id, pokemon_name, types_str, CITY, celc))
+     c.execute("INSERT OR IGNORE INTO pokemon(id, name, type, city, temp, image_url) values(?, ?, ?, ?, ?, ?)",
+               (pokemon_id, pokemon_name, types_str, CITY, celc, img_url))
      con.commit()
      inserted = (con.total_changes - before) > 0
      if not inserted:

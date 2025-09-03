@@ -3,7 +3,7 @@ from mainapp import send_email
 
 st.write("Jeśli masz jakiś pomysł, lub znalazłeś bład możesz to zgłosić tutaj")
 mail_content = st.text_area("Treść wiadomości")
-mail_back = st.text_input("Twój mail")
+mail_back = st.text_input("Twój mail", key="input_emailpage")
 if st.button("Wyślij"):
     if not mail_content or not mail_content.strip():
         st.info("Nie można wysłać pustego maila")

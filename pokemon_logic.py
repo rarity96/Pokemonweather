@@ -1,6 +1,14 @@
 import mainapp, sqlite3, random
 import streamlit as st
 
+LVL = {
+    1: 3,
+    2: 6,
+    3: 10,
+    4: 15,
+    5: 21,
+}
+
 
 @st.cache_resource
 def sqlite_connect():
@@ -22,6 +30,7 @@ def get_ids_by_type(type_name, max_id = 151) -> list[int]:
         if pok_id <= max_id:
             ids.append(pok_id)
     return ids
+
 
 def get_random_pokemon_by_type(type_name: str, max_id: int = 151):
     ids = get_ids_by_type(type_name, max_id)
@@ -62,16 +71,21 @@ def get_pokemon_image(pokemon_id, prefer="official") -> str| None:
     except Exception:
         return None
 
+
 def calculate_exp(pokemon_id):
     con = sqlite_connect()
     c = con.cursor()
     check_exp = c.execute("SELECT total_exp FROM pokemon WHERE id = ?", (pokemon_id,)).fetchone()
     current_exp = 0 if (check_exp is None or check_exp[0] is None) else check_exp[0]
-    if current_exp < 2:
-        return 1
-    elif current_exp < 4:
-        return 2
-    elif current_exp < 6:
-        return 3
-    else:
-        return 4
+    for lvl, exp_needed in LVL.items():
+        if current_exp < exp_needed:
+            return lvl
+    return max(LVL.keys())
+#     if current_exp < 2:
+#         return 1
+#     elif current_exp < 4:
+#         return 2
+#     elif current_exp < 6:
+#         return 3
+#     else:
+#         return 4
