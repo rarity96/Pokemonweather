@@ -1,5 +1,6 @@
 import smtplib, ssl, pokemon_logic
 import sqlite3
+import hashlib
 from email.message import EmailMessage
 import streamlit as st
 import random, requests
@@ -25,25 +26,33 @@ def sqlite_connect():
 def sql_con():
     con = sqlite_connect()
     c = con.cursor()
-    check_table_pokemon = c.execute("""SELECT name 
-                                        FROM sqlite_master
-                                        WHERE type='table' AND name='pokemon'""")
-    fetch_check_table_pokemon = c.fetchone()
 
-    if fetch_check_table_pokemon == None:
-        c.execute("""CREATE TABLE pokemon (
-                id  INTEGER PRIMARY KEY,
-                name  TEXT UNIQUE,
-                type TEXT,
-                lvl INTEGER DEFAULT 1,
-                total_exp INTEGER DEFAULT 0,
-                city text,
-                temp REAL,
-                image_url TEXT
-            )""")
+    c.execute("""CREATE TABLE IF NOT EXISTS pokemon (
+            id  INTEGER PRIMARY KEY,
+            name  TEXT UNIQUE,
+            type TEXT,
+            lvl INTEGER DEFAULT 1,
+            total_exp INTEGER DEFAULT 0,
+            city text,
+            temp REAL,
+            image_url TEXT
+        )""")
+
+    c.execute("""
+               CREATE TABLE IF NOT EXISTS user(
+                id INTEGER PRIMARY KEY,
+                name TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                last_login text
+                )
+        """)
+
+
 
     con.commit()
 
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
 
 def kelvin_to_celcius(temperature):
         celcius = temperature - 273.15
@@ -96,7 +105,14 @@ def get_weather():
  desc = result['weather'][0]['description']
  return celc, result, desc,
 
-# *******************************************************
+
+# ******************************************************* Login Part
+col_log, col_pw = st.columns([0.5, 0.5])
+with col_log:
+    username = st.text_input("Nazwa użytkownika", key="input_name_login")
+with col_pw:
+    password = st.text_input("Hasło", type="password", key="input_password")
+# *********************************************************** City input part
 col1, col2 = st.columns([1, 0.12])
 with col1:
  input_city = st.text_input("Podaj miasto", placeholder="Nazwa miasta", key="Input_city_mainpage")

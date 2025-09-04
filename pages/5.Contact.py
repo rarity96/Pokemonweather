@@ -1,4 +1,4 @@
-import streamlit as st
+from mainapp import st
 from mainapp import send_email
 
 st.write("Jeśli masz jakiś pomysł, lub znalazłeś bład możesz to zgłosić tutaj")
