@@ -1,5 +1,20 @@
 import streamlit as st
-from mainapp import sqlite_connect, pd
+import pandas as pd
+from mainapp import sqlite_connect
+
+backgroud_color = """
+    <style>[data-testid="stAppViewContainer"]{
+    background-color: #f04a4a;
+    }
+    </style>
+"""
+
+
+
+st.markdown(
+    backgroud_color,
+    unsafe_allow_html=True
+)
 
 with st.expander("Pokémony w bazie (info)"):
     con = sqlite_connect()
@@ -25,7 +40,19 @@ try:
         cols = st.columns([1, 3])
         with cols[0]:
             if image_url:
-                st.image(image_url, width=80)
+                st.markdown(f"""
+                <div style="
+                        background:#add8e6; 
+                        padding:8px; 
+                        border-radius:12px; 
+                        display:inline-block; 
+                        border: 4px solid #b0acac;
+                    ">
+                        <img src="{image_url}" width="80" />
+                    </div>
+                """,
+                            unsafe_allow_html=True)
+
         with cols[1]:
             st.write(f"**{id} – {name}**")
             st.caption(f"Typ: {typ}, lvl: {lvl}, exp: {total_exp}")

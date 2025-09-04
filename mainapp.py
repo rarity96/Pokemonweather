@@ -1,13 +1,25 @@
 import smtplib, ssl, pokemon_logic
 import sqlite3
 from email.message import EmailMessage
-# import freecurrencyapi
 import streamlit as st
 import random, requests
-import pandas as pd
-import os
 import pokebase as pb
+import base64
 from datetime import datetime
+with open("chmury.jpeg", "rb") as f:
+    encoded = base64.b64encode(f.read()).decode()
+
+background_css = f"""
+<style>
+[data-testid="stAppViewContainer"] {{
+    background-image: url("data:image/png;base64,{encoded}");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}}
+</style>
+"""
+st.markdown(background_css, unsafe_allow_html=True)
 
 
 weather_key = st.secrets['apis']["weather_key"]
