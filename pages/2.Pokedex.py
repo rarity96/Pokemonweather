@@ -2,20 +2,6 @@ import streamlit as st
 import pandas as pd
 from mainapp import sqlite_connect
 
-backgroud_color = """
-    <style>[data-testid="stAppViewContainer"]{
-    background-color: #f04a4a;
-    }
-    </style>
-"""
-
-
-
-st.markdown(
-    backgroud_color,
-    unsafe_allow_html=True
-)
-
 with st.expander("Pokémony w bazie (info)"):
     con = sqlite_connect()
     c = con.cursor()
