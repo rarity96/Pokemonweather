@@ -1,4 +1,4 @@
-import streamlit as st
+from mainapp import st
 import pandas as pd
 from mainapp import sqlite_connect
 

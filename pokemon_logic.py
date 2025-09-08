@@ -1,5 +1,5 @@
 import mainapp, sqlite3, random
-import streamlit as st
+from mainapp import st
 
 LVL = {
     1: 3,
