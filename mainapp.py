@@ -156,16 +156,20 @@ def render_login():
         input_username = text_input("Nazwa użytkownika")
         input_password = text_input("Hasło", type='password')
         submit = form_submit_button("Zaloguj")
+
         if submit:
-            password = hash_password(input_password)
-            check_login = checking_login(input_username, password)
-            password = check_password(input_username, password)
-            if check_login == True and password == True:
-                session_state.is_auth = True
-                session_state.username = input_username
-                rerun()
+            if len(input_password) < 8:
+                st.warning("Hasło powinno zawierać ponad 8 znaków")
             else:
-                st.warning("Złe hasło")
+                password = hash_password(input_password)
+                check_login = checking_login(input_username, password)
+                password = check_password(input_username, password)
+                if check_login == True and password == True:
+                    session_state.is_auth = True
+                    session_state.username = input_username
+                    rerun()
+                else:
+                    st.warning("Złe hasło")
 
     # *********************************************************** City input part
 def render_main():
