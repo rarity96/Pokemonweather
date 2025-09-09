@@ -72,10 +72,13 @@ def get_pokemon_image(pokemon_id, prefer="official") -> str| None:
         return None
 
 
-def calculate_exp(pokemon_id):
+def calculate_exp(pokemon_id, user_id):
+    if not user_id:
+        return 1
     con = sqlite_connect()
     c = con.cursor()
-    check_exp = c.execute("SELECT total_exp FROM pokemon WHERE id = ?", (pokemon_id,)).fetchone()
+    check_exp = c.execute(
+        "SELECT total_exp FROM pokemon WHERE id = ? AND user_id = ?",(pokemon_id, user_id)).fetchone()
     current_exp = 0 if (check_exp is None or check_exp[0] is None) else check_exp[0]
     for lvl, exp_needed in LVL.items():
         if current_exp < exp_needed:

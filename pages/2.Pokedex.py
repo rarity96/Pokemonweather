@@ -1,12 +1,30 @@
 from mainapp import st
 import pandas as pd
 from mainapp import sqlite_connect
+from streamlit import session_state, text_input, form_submit_button, rerun
 
+if st.session_state.get("is_auth"):
+    st.success(f"Jesteś zalogowany jako {st.session_state.get('username')}")
+else:
+    st.warning("Nie jesteś zalogowany. Zaloguj się na stronie głównej.")
+
+con = sqlite_connect()
+c = con.cursor()
+user_id = None
+if st.session_state.get("is_auth") and st.session_state.get("username"):
+     row = c.execute("SELECT id FROM user WHERE name = ?", (st.session_state.username,)).fetchone()
+     if row:
+         user_id = row[0]
+username = st.session_state.username
 with st.expander("Pokémony w bazie (info)"):
-    con = sqlite_connect()
-    c = con.cursor()
     try:
-        rows = c.execute("SELECT id, name, type, lvl, total_exp, city, temp FROM pokemon ORDER BY id").fetchall()
+        rows = c.execute(
+            "SELECT id, name, type, lvl, total_exp, city, temp "
+            "FROM pokemon "
+            "WHERE user_id = ? "
+            "ORDER BY id",
+            (user_id,)
+        ).fetchall()
         df = pd.DataFrame(rows, columns=["ID", "Nazwa", "Typ", 'lvl', 'total_exp', 'miasto gdzie złapano',
                                          'zarejestrowana temp'])
         st.dataframe(df, width='stretch')
@@ -21,7 +39,13 @@ with st.expander("Pokémony w bazie (info)"):
         st.info("Brak zlapancyh pokemonow")
 
 try:
-    rows = c.execute("SELECT id, name, type, image_url, lvl, total_exp  FROM pokemon ORDER BY id").fetchall()
+    rows = c.execute(
+        "SELECT id, name, type, image_url, lvl, total_exp "
+        "FROM pokemon "
+        "WHERE user_id = ? "
+        "ORDER BY id",
+        (user_id,)
+    ).fetchall()
     for id, name, typ, image_url, lvl, total_exp in rows:
         cols = st.columns([1, 3])
         with cols[0]:
