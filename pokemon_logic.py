@@ -51,6 +51,7 @@ def get_pokemon(preferred_type):
     types = [t.type.name for t in pokemon.types]
     return {"id": pokemon.id, "name": pokemon.name.capitalize(), "img_url": get_pokemon_image(pokemon.id, prefer='official'), "types": types}
 
+@st.cache_data
 def get_pokemon_image(pokemon_id, prefer="official") -> str| None:
     pokemon = pb.pokemon(pokemon_id)
     image = pokemon.sprites
@@ -84,11 +85,4 @@ def calculate_exp(pokemon_id, user_id):
         if current_exp < exp_needed:
             return lvl
     return max(LVL.keys())
-#     if current_exp < 2:
-#         return 1
-#     elif current_exp < 4:
-#         return 2
-#     elif current_exp < 6:
-#         return 3
-#     else:
-#         return 4
+

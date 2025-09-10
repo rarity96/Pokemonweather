@@ -1,12 +1,11 @@
 import smtplib, ssl, pokemon_logic
 import sqlite3
+from supabase import create_client, Client
 import hashlib
-import pandas as pd
 from email.message import EmailMessage
 import streamlit as st
 import random, requests
 import pokebase as pb
-import base64
 from datetime import datetime
 
 from streamlit import session_state, text_input, form_submit_button, rerun
@@ -17,23 +16,12 @@ pw = st.secrets['email']['pw']
 receiver = st.secrets['email']['receiver']
 currency_key = st.secrets['apis']['currency_key']
 
-
 @st.cache_resource
 def sqlite_connect():
     con = sqlite3.connect('pokeweather.db', check_same_thread=False)
     con.execute("PRAGMA foreign_keys = ON")
     con.execute("PRAGMA journal_mode = WAL")
     return con
-
-
-if 'weather_state' not in st.session_state:
-    st.session_state['weather_state'] = None
-if 'last_city' not in st.session_state:
-    st.session_state['last_city'] = ""
-if 'is_auth' not in st.session_state:
-    session_state.is_auth = False
-if 'username' not in st.session_state:
-    session_state.username = False
 
 def sql_con():
     con = sqlite_connect()
@@ -68,12 +56,23 @@ def sql_con():
 
     con.commit()
 
-def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
+
+
+if 'weather_state' not in st.session_state:
+    st.session_state['weather_state'] = None
+if 'last_city' not in st.session_state:
+    st.session_state['last_city'] = ""
+if "is_auth" not in st.session_state:
+    st.session_state.is_auth = False
+if "user" not in st.session_state:
+    st.session_state.user = None
 
 def kelvin_to_celcius(temperature):
         celcius = temperature - 273.15
         return celcius
+
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
 
 def temp_to_type(celc: float, desc) -> str:
     desc = desc.lower()
@@ -124,6 +123,8 @@ def get_weather(city):
      desc = result['weather'][0]['description']
      return {"city": city, "celc": celc, "desc": desc, "raw": result}
 
+def gain_exp():
+    return random.randint(1, 2)
 
 def checking_login(username, password):
     sql_con()
@@ -171,6 +172,7 @@ def render_login():
                 else:
                     st.warning("Złe hasło")
 
+
     # *********************************************************** City input part
 def render_main():
     if session_state.is_auth == False:
@@ -206,6 +208,7 @@ def render_main():
         st.write(f'W {city} aktualna temperatura to {celc:.1f}°C')
         st.write(f'Warunki pogodowe: {pogoda["weather"][0]["description"]}')
         st.write(f'Prędkość wiatru: {pogoda["wind"]["speed"]} m/s')
+        st.spinner("Losuję Pokémona...")
         st.write(f"Twój wylosowany pokemon to: {state['pokemon_name']}, typ: {state['pokemon_types']}")
         login_status = state.get('login_status')
         if state.get('img_url'):
@@ -213,6 +216,7 @@ def render_main():
     # *******************************************************
     if st.button('Sprawdz pogode'):
      with st.spinner('Getting data...'):
+         exp = gain_exp()
          sql_con()
          weather = get_weather(CITY)
          if not weather:
@@ -220,6 +224,7 @@ def render_main():
          con = sqlite_connect()
          c = con.cursor()
          user_id = None
+         c.execute("UPDATE user SET poke_num = poke_num + 1 WHERE name = ?",(st.session_state.username,))
          if st.session_state.get("is_auth") and st.session_state.get("username"):
              row = c.execute("SELECT id FROM user WHERE name = ?", (st.session_state.username,)).fetchone()
              if row:
@@ -241,10 +246,10 @@ def render_main():
 
              if not inserted:
                  new_lvl = pokemon_logic.calculate_exp(pokemon_id, user_id)
-                 st.info("Tego pokemona już złapałeś! Dostajesz za to 1 exp")
+                 st.info(f"Tego pokemona już złapałeś! Dostajesz za to {exp} exp")
                  c.execute(
-                     "UPDATE pokemon SET total_exp = total_exp + 1, lvl = ? WHERE id = ? AND user_id = ?",
-                     (new_lvl, pokemon_id, user_id)
+                     "UPDATE pokemon SET total_exp = total_exp + ?, lvl = ? WHERE id = ? AND user_id = ?",
+                     (exp, new_lvl, pokemon_id, user_id)
                  )
                  con.commit()
              else:
