@@ -48,6 +48,7 @@ def sql_con():
                 name TEXT UNIQUE NOT NULL UNIQUE,
                 password_hash TEXT NOT NULL,
                 last_login text
+                poke_num INTEGER DEFAULT 0
                 )
         """)
 
