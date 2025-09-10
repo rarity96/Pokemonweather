@@ -1,6 +1,5 @@
 import smtplib, ssl, pokemon_logic
 import sqlite3
-from supabase import create_client, Client
 import hashlib
 from email.message import EmailMessage
 import streamlit as st
