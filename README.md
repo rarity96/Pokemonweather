@@ -3,6 +3,7 @@
 <p>
 A fun educational project that combines real-time weather data with Pokémon catching mechanics.<br>
 Based on the weather in your chosen city, you’ll catch a Pokémon from oryginal 151 pokemons of the corresponding type.
+You can check LIVE project here: <a href="https://pokemonweather.streamlit.app/">pokemonweather.streamlit.app</a>
 </p>
 
 <p>
