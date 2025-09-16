@@ -1,2 +1,2 @@
 from mainapp import st
-st.write("Tutaj będa opisy aktualizacji, co zostało dodane/zmienione. :) ")
+st.write("For the future to put updates notes. :) ")
