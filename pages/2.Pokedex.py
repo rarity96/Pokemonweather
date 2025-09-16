@@ -4,9 +4,9 @@ from mainapp import sqlite_connect
 from streamlit import session_state, text_input, form_submit_button, rerun
 
 if st.session_state.get("is_auth"):
-    st.success(f"Jesteś zalogowany jako {st.session_state.get('username')}")
+    st.success(f"You are logged in as {st.session_state.get('username')}")
 else:
-    st.warning("Nie jesteś zalogowany. Zaloguj się na stronie głównej.")
+    st.warning("You are not logged in. Please login on main page")
 
 con = sqlite_connect()
 c = con.cursor()
@@ -16,7 +16,7 @@ if st.session_state.get("is_auth") and st.session_state.get("username"):
      if row:
          user_id = row[0]
 username = st.session_state.username
-with st.expander("Pokémony w bazie (info)"):
+with st.expander("Pokeomns in database (more_info)"):
     try:
         rows = c.execute(
             "SELECT id, name, type, lvl, total_exp, city, temp "
@@ -25,18 +25,18 @@ with st.expander("Pokémony w bazie (info)"):
             "ORDER BY id",
             (user_id,)
         ).fetchall()
-        df = pd.DataFrame(rows, columns=["ID", "Nazwa", "Typ", 'lvl', 'total_exp', 'miasto gdzie złapano',
-                                         'zarejestrowana temp'])
+        df = pd.DataFrame(rows, columns=["ID", "Name", "Type", 'lvl', 'total_exp', 'City',
+                                         'Temp'])
         st.dataframe(df, width='stretch')
         if st.button('delete db'):
             con = sqlite_connect()
             c = con.cursor()
             c.execute("DROP TABLE IF EXISTS pokemon")
             con.commit()
-            st.success("Tabela 'pokemon' została usunięta.")
+            st.success("'Pokeomn' table, has been deleted.")
             st.rerun()
     except Exception:
-        st.info("Brak zlapancyh pokemonow")
+        st.info("There is no pokemons in database")
 
 try:
     rows = c.execute(
@@ -67,4 +67,4 @@ try:
             st.write(f"**{id} – {name}**")
             st.caption(f"Typ: {typ}, lvl: {lvl}, exp: {total_exp}")
 except Exception:
-    st.info("Brak zlapancyh pokemonow")
+    st.info("There is no pokemons in database")

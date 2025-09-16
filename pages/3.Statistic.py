@@ -1,11 +1,11 @@
 from mainapp import st, sqlite_connect
 import  pandas as pd
 import altair as alt
-st.write("Do przegladania statystyk, wyświetlania wykresów i danych.")
+st.write("To check statistics.")
 
 con = sqlite_connect()
 c = con.cursor()
-with st.expander("Zapisani użytkownicy: "):
+with st.expander("Users: "):
     try:
         rows = c.execute(
             "SELECT id, name, last_login, poke_num "
@@ -15,7 +15,7 @@ with st.expander("Zapisani użytkownicy: "):
         df = pd.DataFrame(rows, columns=["ID", "username", 'last_login', 'poke_num'])
         st.dataframe(df, width='stretch')
     except Exception:
-        st.info("Brak użytkowników")
+        st.info("There is no users. Be the first one!")
 
 
 def leader_chart():
@@ -30,9 +30,9 @@ df = leader_chart()
 st.subheader("Chart")
 
 chart = (alt.Chart(df).mark_bar().encode(
-    x = alt.X("pokemons:Q", title = "Złapane pokemony", axis=alt.Axis(tickMinStep=1)),
+    x = alt.X("pokemons:Q", title = "Catched pokemons", axis=alt.Axis(tickMinStep=1)),
     color=alt.Color("username:N", legend=None),
-    y = alt.Y("username:N",sort="-x", title = "Użytkownik"),
+    y = alt.Y("username:N",sort="-x", title = "Users"),
     tooltip=['username', 'pokemons']
 ).properties(height=250))
 

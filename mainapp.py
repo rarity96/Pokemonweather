@@ -28,8 +28,8 @@ def sql_con():
 
     c.execute("""
     CREATE TABLE IF NOT EXISTS pokemon (
-        id        INTEGER,                 -- id gatunku
-        user_id   INTEGER NOT NULL,        -- właściciel rekordu
+        id        INTEGER,
+        user_id   INTEGER NOT NULL,
         name      TEXT,
         type      TEXT,
         lvl       INTEGER DEFAULT 1,
@@ -37,7 +37,7 @@ def sql_con():
         city      TEXT,
         temp      REAL,
         image_url TEXT,
-        PRIMARY KEY (id, user_id),         -- [FIX-PER-USER]
+        PRIMARY KEY (id, user_id),
         FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
     )""")
 
@@ -114,7 +114,7 @@ def send_email(mail_content: str, mail_back: str):
 
 def get_weather(city):
      if not city:
-         st.info("Podaj nazwe miasta by sprawdzić pogodę")
+         st.info("Input a city to get the weather")
          return None
      url = f'http://api.openweathermap.org/data/2.5/weather?appid={weather_key}&q={city}&lang=pl'
      result = requests.get(url).json()
@@ -146,21 +146,21 @@ def check_password(username, password):
     c = con.cursor()
     check_pass = c.execute("SELECT password_hash FROM user WHERE name = ?", (username,)).fetchone()
     if not check_pass:
-        return st.warning("Złe hasło")
+        return st.warning("Wrong password")
     if check_pass[0] == password and len(password) > 8:
         return True
     else:
-        return st.warning("Złe hasło")
+        return st.warning("Wrong password")
 
 def render_login():
     with st.form("login form"):
-        input_username = text_input("Nazwa użytkownika")
-        input_password = text_input("Hasło", type='password')
-        submit = form_submit_button("Zaloguj")
+        input_username = text_input("Username")
+        input_password = text_input("Password", type='password')
+        submit = form_submit_button("Login")
 
         if submit:
             if len(input_password) < 8:
-                st.warning("Hasło powinno zawierać ponad 8 znaków")
+                st.warning("The password should be > 8 char")
             else:
                 password = hash_password(input_password)
                 check_login = checking_login(input_username, password)
@@ -170,7 +170,7 @@ def render_login():
                     session_state.username = input_username
                     rerun()
                 else:
-                    st.warning("Złe hasło")
+                    st.warning("Bad password")
 
 
     # *********************************************************** City input part
@@ -178,21 +178,21 @@ def render_main():
     if session_state.is_auth == False:
         render_login()
     else:
-        if st.button("Wyloguj"):
+        if st.button("Logout"):
             st.session_state.is_auth = False
             st.session_state.username = False
             st.rerun()
-        st.info(f"Jesteś zalogowany jako {st.session_state.username}")
+        st.info(f"You are logged in as {st.session_state.username}")
     col1, col2 = st.columns([1, 0.12])
     with col1:
-     input_city = st.text_input("Podaj miasto", placeholder="Nazwa miasta", key="Input_city_mainpage")
+     input_city = st.text_input("Input city name", placeholder="City", key="Input_city_mainpage")
     with col2:
      with st.popover("🛈", use_container_width=True):
          st.markdown("###Zasady działania")
          st.markdown(
-             """-Wpisz miasto dla którego chcesz poznać pogode i kliknij 'Sprawdź pogode'   
-             -Na podstawie aktualnej pogody, zostanie wylosowany pokemon który trafi do twojego pokedex'u.   
-             -Każde spotkanie zapisywane jest w bazie (Exp i poziom rosna przy każdym kolejnym spotkaniu złapanego poka"""
+             """-Input a city name for which one you would like to check the weather'   
+             -Based on currently weather, pokemon will be choose and add to your pokedex.   
+             -Every encounter will be save in database. (Exp and lvl are rising with every next encounter witch catched pokemon)"""
          )
 
 
@@ -205,16 +205,16 @@ def render_main():
         celc =state['celc']
         pogoda =state['raw']
         city =state['city']
-        st.write(f'W {city} aktualna temperatura to {celc:.1f}°C')
-        st.write(f'Warunki pogodowe: {pogoda["weather"][0]["description"]}')
-        st.write(f'Prędkość wiatru: {pogoda["wind"]["speed"]} m/s')
-        st.spinner("Losuję Pokémona...")
-        st.write(f"Twój wylosowany pokemon to: {state['pokemon_name']}, typ: {state['pokemon_types']}")
+        st.write(f'In {city} the temp is: {celc:.1f}°C')
+        st.write(f'Weather conditions: {pogoda["weather"][0]["description"]}')
+        st.write(f'Speed of wind: {pogoda["wind"]["speed"]} m/s')
+        st.spinner("Draw a pokemon...")
+        st.write(f"Your pokemon: {state['pokemon_name']}, type: {state['pokemon_types']}")
         login_status = state.get('login_status')
         if state.get('img_url'):
             st.image(state['img_url'], width=800)
     # *******************************************************
-    if st.button('Sprawdz pogode'):
+    if st.button('Check the weather'):
      with st.spinner('Getting data...'):
          exp = gain_exp()
          sql_con()
@@ -246,16 +246,16 @@ def render_main():
 
              if not inserted:
                  new_lvl = pokemon_logic.calculate_exp(pokemon_id, user_id)
-                 st.info(f"Tego pokemona już złapałeś! Dostajesz za to {exp} exp")
+                 st.info(f"You already have this pokemon! Your {pokemon_name} is gaining {exp} exp")
                  c.execute(
                      "UPDATE pokemon SET total_exp = total_exp + ?, lvl = ? WHERE id = ? AND user_id = ?",
                      (exp, new_lvl, pokemon_id, user_id)
                  )
                  con.commit()
              else:
-                 st.info(f"Gratulacje {st.session_state.username}! Złapałeś tego pokemona po raz pierwszy")
+                 st.info(f"Congrats! {st.session_state.username}! It is your first {pokemon_name}")
          else:
-             st.info("Zaloguj się, aby zapisać pokemona do twojego pokedexu!")
+             st.info("Please login to save your new pokemon to database")
 
          st.session_state["weather_state"] = {
              **weather,
