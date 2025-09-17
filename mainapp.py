@@ -89,7 +89,12 @@ def temp_to_type(celc: float, desc) -> str:
     else:
         return "fire"
 
-
+def check_location_by_ip():
+    try:
+        data = requests.get("http://ipapi.co/json", timeout=4).json()
+        return data.get("city")
+    except Exception:
+        return st.info("Nie udało się pobrać miasta")
 
 
 def send_email(mail_content: str, mail_back: str):
@@ -113,9 +118,6 @@ def send_email(mail_content: str, mail_back: str):
          server.send_message(msg)
 
 def get_weather(city):
-     if not city:
-         st.info("Input a city to get the weather")
-         return None
      url = f'http://api.openweathermap.org/data/2.5/weather?appid={weather_key}&q={city}&lang=pl'
      result = requests.get(url).json()
      kelvin = result['main']['temp']
@@ -133,7 +135,7 @@ def checking_login(username, password):
     check_username = c.execute("SELECT name FROM user WHERE name = ?", (username,)).fetchone()
     if check_username is None:
         c.execute("INSERT INTO user (name, password_hash) values (?, ?)", (username, password))
-        st.info("stworzyłeś swoje konto!")
+        st.info("You have created an account!")
         con.commit()
         return True
     else:
@@ -170,8 +172,7 @@ def render_login():
                     session_state.username = input_username
                     rerun()
                 else:
-                    st.warning("Bad password")
-
+                    st.warning("Wrong password")
 
     # *********************************************************** City input part
 def render_main():
@@ -186,17 +187,21 @@ def render_main():
     col1, col2 = st.columns([1, 0.12])
     with col1:
      input_city = st.text_input("Input city name", placeholder="City", key="Input_city_mainpage")
+    if not input_city:
+        checked_city = check_location_by_ip()
+        st.info(f"You did not put the city, so we checked and inserted {checked_city}")
+        CITY = str(checked_city)
+    else:
+        CITY = str(input_city).capitalize()
     with col2:
      with st.popover("🛈", use_container_width=True):
-         st.markdown("###Zasady działania")
+         st.markdown("###Rules")
          st.markdown(
-             """-Input a city name for which one you would like to check the weather'   
+             """-Input a city name for which one you would like to check the weather'
+             -If you will leave city input empty, we will insert by your IP.   
              -Based on currently weather, pokemon will be choose and add to your pokedex.   
-             -Every encounter will be save in database. (Exp and lvl are rising with every next encounter witch catched pokemon)"""
+             -Every encounter will be save in database. (Exp and lvl are rising with every next encounter with pokemon)"""
          )
-
-
-    CITY = str(input_city).capitalize()
 
 
     def render_weather_block(state: dict):
