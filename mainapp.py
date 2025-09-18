@@ -76,9 +76,9 @@ def hash_password(password: str) -> str:
 
 def temp_to_type(celc: float, desc) -> str:
     desc = desc.lower()
-    if "mgła" in desc or "zamglenie" in desc:
+    if "fog" in desc:
         return "ghost"
-    elif "deszcz" in desc or "mżawka" in desc:
+    elif "rain" in desc:
         return "water"
     elif celc < 10:
         return "ice"
@@ -94,7 +94,7 @@ def check_location_by_ip():
         data = requests.get("http://ipapi.co/json", timeout=4).json()
         return data.get("city")
     except Exception:
-        return st.info("Nie udało się pobrać miasta")
+        return st.info("We couldn't check the city")
 
 
 def send_email(mail_content: str, mail_back: str):
@@ -118,7 +118,7 @@ def send_email(mail_content: str, mail_back: str):
          server.send_message(msg)
 
 def get_weather(city):
-     url = f'http://api.openweathermap.org/data/2.5/weather?appid={weather_key}&q={city}&lang=pl'
+     url = f'http://api.openweathermap.org/data/2.5/weather?appid={weather_key}&q={city}'
      result = requests.get(url).json()
      kelvin = result['main']['temp']
      celc = kelvin_to_celcius(kelvin)
@@ -155,7 +155,7 @@ def check_password(username, password):
         return st.warning("Wrong password")
 
 def render_login():
-    with st.form("login form"):
+    with st.form(key="login_form"):
         input_username = text_input("Username")
         input_password = text_input("Password", type='password')
         submit = form_submit_button("Login")
@@ -189,7 +189,6 @@ def render_main():
      input_city = st.text_input("Input city name", placeholder="City", key="Input_city_mainpage")
     if not input_city:
         checked_city = check_location_by_ip()
-        st.info(f"You did not put the city, so we checked and inserted {checked_city}")
         CITY = str(checked_city)
     else:
         CITY = str(input_city).capitalize()
@@ -197,8 +196,8 @@ def render_main():
      with st.popover("🛈", use_container_width=True):
          st.markdown("###Rules")
          st.markdown(
-             """-Input a city name for which one you would like to check the weather'
-             -If you will leave city input empty, we will insert by your IP.   
+             """
+             -Input a city name for which one you would like to check the weather (If empty checked by IP).   
              -Based on currently weather, pokemon will be choose and add to your pokedex.   
              -Every encounter will be save in database. (Exp and lvl are rising with every next encounter with pokemon)"""
          )
@@ -272,4 +271,8 @@ def render_main():
 
     render_weather_block(st.session_state.get('weather_state'))
 
-render_main()
+def run():
+    render_main()
+
+if __name__ == "__main__":
+    run()
